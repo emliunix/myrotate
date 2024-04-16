@@ -1,0 +1,11 @@
+[package]
+name = "rotrs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bluer = { version = "0.17.1", features = ["tokio-stream", "bluetoothd", "id"] }
+env_logger = "0.11.3"
+log = "0.4.21"
+thiserror = "1.0.58"
+uuid = "1.8.0"
