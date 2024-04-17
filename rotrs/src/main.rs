@@ -1,33 +1,44 @@
-#![feature(proc_macro_c_str_literals)]
+use bluer::gatt::local::{Characteristic, CharacteristicRead, Service};
+use thiserror::Error;
 
-use bluer::gatt::local::{Characteristic, Service};
-
-#[thiserror::Error]
+#[derive(Error, Debug)]
 enum AppError {
-    Bluer(bluer::Error),
-    Io(std::io::Error),
+    #[error("bluer error")]
+    Bluer(#[from] bluer::Error),
+    #[error("io error")]
+    Io(#[from] std::io::Error),
 }
 
 fn mk_battery_characteristic() -> Characteristic {
-    let mut characteristic = Characteristic::new(bluer::id::BatteryLevel::UUID);
-    characteristic.set_value(vec![0x64]);
-    characteristic
+    let uuid = bluer::id::Characteristic::BatteryLevel.into();
+    Characteristic {
+        uuid,
+        read: Some(CharacteristicRead {
+            read: true,
+            fun: Box::new(move |req| {
+                Box::pin(async move {
+                    Ok(vec![1u8])
+                })
+            }),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
 }
 
 fn mk_service() -> Service {
-    let uuid = Uuid::parse_str("0000180a-0000-1000-8000-00805f9b34fb").unwrap();
+    let uuid = bluer::id::Service::BatteryService.into();
     Service {
         uuid,
         handle: None,
         primary: true,
-        characteristics: vec![],
-        control_handle: Default::default(),
-        _non_exhaustive: Default::default(),
+        characteristics: vec![mk_battery_characteristic()],
+        ..Default::default()
     }
 }
 
 #[tokio::main(flavor = "current_thread")]
-fn main() -> Result<(), AppError> {
+async fn main() -> Result<(), AppError> {
     env_logger::init();
     log::info!("Starting up");
     let session = bluer::Session::new().await?;
