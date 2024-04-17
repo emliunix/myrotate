@@ -1,0 +1,18 @@
+/* Add this in your App.css or a separate CSS file */
+.plate {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pointer {
+    width: 100px;
+    height: 5px;
+    background-color: red;
+    transform-origin: 0% 50%;
+}
