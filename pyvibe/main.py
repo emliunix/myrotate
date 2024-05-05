@@ -14,14 +14,34 @@ as5600 = AS5600(i2c_bus)
 # Initialize mutex for exclusive access to DRV2605
 play_mutex = asyncio.Lock()
 
+
 class IntoLibMode(object):
     def __init__(self, drv2605):
         self.drv2605 = drv2605
         self.drv2605.mode_lib()
 
     async def play(self):
+        if play_mutex.locked():
+            return
         async with play_mutex:
             self.drv2605.play_lib()
+
+
+class IntoRTPMode(object):
+    def __init__(self, drv2605, amp):
+        self.drv2605 = drv2605
+        self.drv2605.diag()
+        self.drv2605.p_diag()
+        self.drv2605.mode_rtp(amp)
+
+    async def play(self):
+        if play_mutex.locked():
+            return
+        async with play_mutex:
+            self.drv2605.play_rtp()
+            await asyncio.sleep(0.01)
+            self.drv2605.standby()
+
 
 async def vibrate():
         print("vibrate")
@@ -31,7 +51,9 @@ async def vibrate():
 
 async def main():
     prev_loc = None
-    drv2605_play = IntoLibMode(drv2605)
+    # drv2605_play = IntoLibMode(drv2605)
+    DRV2605.explain(drv2605.calibrate(DRV2605.mk_lra_config(init_freq=210, rms_volt=1.2, overdrive_volt=3.3, blanking_time=1, idiss_time=1)))
+    drv2605_play = IntoRTPMode(drv2605, 255)
     while True:
         angle = as5600.read()
         if prev_loc is None:
